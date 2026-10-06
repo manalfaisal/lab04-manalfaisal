@@ -63,7 +63,20 @@ void emu_jalr(struct rv_state *rsp, uint32_t iw) {
 
     rsp->pc = val;  // PC = return address
 }
+void emu_i_type(struct rv_state *rsp, uint32_t iw){
+	uint32_t rd = (iw >> 7) & 0b11111;
+	uint32_t rs1 = (iw >> 15) & 0b11111;
+	uint32_t funct3 = (iw >> 12) & 0b111;
+	uint32_t shamt = (iw >> 20) & 0b111111;
 
+	if(funct3 == 0b101){
+		// srli
+		rsp->regs[rd] = rsp->regs[rs1] >> shamt;
+	} else {
+		unsupported("I-type funct3", funct3);
+	}
+	rsp->pc += 4;
+}
 void rv_one(struct rv_state *rsp) {
 
     // Get an instruction word from the current Program Counter    
@@ -84,6 +97,9 @@ void rv_one(struct rv_state *rsp) {
             // JALR (aka RET) is a variant of I-type instructions
             emu_jalr(rsp, iw);
             break;
+        case 0b0010011:
+        	emu_i_type(rsp, iw);
+        	break;
         default:
             unsupported("Unknown opcode: ", opcode);
             
