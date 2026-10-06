@@ -51,6 +51,18 @@ void emu_r_type(struct rv_state *rsp, uint32_t iw) {
         rsp->regs[rd] = rsp->regs[rs1] + rsp->regs[rs2];
     } else if(funct3 == 0b000 && funct7 == 0b0000001){
     	rsp->regs[rd] = rsp->regs[rs1] * rsp->regs[rs2];
+    } else if(funct3 == 0b000 && funct7 == 0b0100000){
+    	// sub
+    	rsp->regs[rd] = rsp->regs[rs1] - rsp->regs[rs2];
+    } else if(funct3 == 0b001 && funct7 == 0b0000000){
+    	// shift left
+    	rsp->regs[rd] = rsp->regs[rs1] << rsp->regs[rs2];
+    } else if(funct3 == 0b101 && funct7 == 0b0000000){
+    	// shift right
+    	rsp->regs[rd] = rsp->regs[rs1] >> rsp->regs[rs2];
+    } else if (funct3 == 0b111 && funct7 == 0b0000000){
+    	// and
+     	rsp->regs[rd] = rsp->regs[rs1] & rsp->regs[rs2];
     } else {
         unsupported("R-type funct3", funct3);
     }
@@ -107,6 +119,13 @@ void emu_b_type(struct rv_state *rsp, uint32_t iw){
 	if(funct3 == 0b100){
 		// blt
 		if(v1 < v2){
+			rsp->pc += imm;
+		} else {
+			rsp->pc += 4;
+		}
+	} else if(funct3 == 0b001){
+		// bne 
+		if(v1 != v2){
 			rsp->pc += imm;
 		} else {
 			rsp->pc += 4;
