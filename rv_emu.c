@@ -134,6 +134,29 @@ void emu_b_type(struct rv_state *rsp, uint32_t iw){
 		unsupported("B-type funct3", funct3);
 	}
 }
+void emu_jal(struct rv_state *rsp, uint32_t iw){
+	uint32_t rd = (iw >> 7) & 0b11111;
+
+	// Extract each piece of the immediate
+	uint64_t imm20 = (iw >> 31) & 0b1;
+	uint64_t imm10_1 = (iw >> 21) & 0b1111111111;
+	uint64_t imm11 = (iw >> 20) & 0b1;
+	uint64_t imm19_12 = (iw >> 12) & 0b11111111;
+
+	// OR pieces back into real positions
+	uint64_t imm_u = (imm20 << 20) | (imm19_12 << 12) | (imm11 << 11) | (imm10_1 << 1);
+
+	// Sign extend a 21 bit immediate
+	int64_t imm = ((int64_t) (imm_u << 43)) >> 43;
+
+	// Link: save return address, unless rd is x0 (plain j)
+	if(rd != 0){
+		rsp->regs[rd] = rsp->pc + 4;
+	}
+
+	rsp->pc += imm;
+	
+}
 void rv_one(struct rv_state *rsp) {
 
     // Get an instruction word from the current Program Counter    
@@ -159,6 +182,9 @@ void rv_one(struct rv_state *rsp) {
         	break;
         case 0b1100011:
         	emu_b_type(rsp, iw);
+        	break;
+        case 0b1101111:
+        	emu_jal(rsp, iw);
         	break;
         default:
             unsupported("Unknown opcode: ", opcode);
